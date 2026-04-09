@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIFM Card Admin</title>
+<link href="https://cdn.jsdelivr.net/npm/@fontsource/open-sans@5.0.28/400.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/@fontsource/open-sans@5.0.28/700.css" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#010131;--bg2:#0A0C26;--card:#121140;--accent:#5391D5;
+  --text:#FEFFF9;--muted:rgba(254,255,249,0.55);--dim:rgba(254,255,249,0.28);
+  --stroke:rgba(83,145,213,0.18);--abg:rgba(83,145,213,0.10);
+  --success:rgba(30,200,100,0.18);--success-text:#4ade80;
+  --error:rgba(220,60,60,0.18);--error-text:#f87171;
+}
+html{background:var(--bg)}
+body{font-family:'Open Sans',sans-serif;font-weight:400;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ── Login ── */
+#login-screen{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:100vh;padding:24px;gap:20px;
+}
+.login-card{
+  background:var(--card);border:1px solid var(--stroke);border-radius:16px;
+  padding:32px;width:100%;max-width:400px;display:flex;flex-direction:column;gap:16px;
+}
+.login-logo{font-size:11px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:var(--accent);text-align:center;margin-bottom:4px}
+.login-title{font-size:1.3rem;font-weight:700;color:var(--text);text-align:center}
+.login-sub{font-size:0.75rem;color:var(--muted);text-align:center;line-height:1.55}
+label{font-size:0.65rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent)}
+input[type=text],input[type=password]{
+  width:100%;padding:11px 14px;border-radius:9px;border:1px solid var(--stroke);
+  background:var(--bg2);color:var(--text);font-family:'Open Sans',sans-serif;
+  font-size:0.82rem;outline:none;transition:border-color 0.15s;margin-top:6px;
+}
+input[type=text]:focus,input[type=password]:focus{border-color:var(--accent)}
+.btn{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:12px 18px;border-radius:10px;border:none;cursor:pointer;
+  font-family:'Open Sans',sans-serif;font-size:0.75rem;font-weight:700;
+  letter-spacing:0.1em;text-transform:uppercase;transition:opacity 0.14s;
+}
+.btn:active{transform:scale(0.97)}
+.btn-primary{background:var(--accent);color:var(--bg)}
+.btn-primary:hover{opacity:0.88}
+.btn-ghost{background:transparent;color:var(--text);border:1px solid var(--stroke)}
+.btn-ghost:hover{background:var(--abg)}
+.btn-danger{background:rgba(220,60,60,0.2);color:#f87171;border:1px solid rgba(220,60,60,0.3)}
+.btn svg{width:15px;height:15px;fill:currentColor;flex-shrink:0}
+
+/* ── App Shell ── */
+#app{display:none;min-height:100vh;flex-direction:column}
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 24px;background:var(--card);border-bottom:1px solid var(--stroke);
+  position:sticky;top:0;z-index:100;
+}
+.topbar-left{display:flex;align-items:center;gap:14px}
+.topbar-logo{font-size:11px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:var(--accent)}
+.topbar-title{font-size:0.85rem;font-weight:700;color:var(--text)}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.status-badge{
+  font-size:0.65rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;
+  padding:5px 12px;border-radius:100px;
+}
+.status-ok{background:var(--success);color:var(--success-text)}
+.status-err{background:var(--error);color:var(--error-text)}
+
+.main{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 57px)}
+
+/* ── Sidebar ── */
+.sidebar{
+  background:var(--bg2);border-right:1px solid var(--stroke);
+  padding:16px 0;overflow-y:auto;
+}
+.sidebar-label{
+  font-size:0.6rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--dim);padding:0 16px;margin-bottom:8px;
+}
+.member-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 16px;cursor:pointer;transition:background 0.13s;
+  border-left:3px solid transparent;
+}
+.member-item:hover{background:var(--abg)}
+.member-item.active{background:var(--abg);border-left-color:var(--accent)}
+.member-avatar{
+  width:32px;height:32px;border-radius:50%;
+  background:var(--abg);border:1px solid var(--stroke);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:var(--accent);flex-shrink:0;letter-spacing:0.05em;
+}
+.member-name{font-size:0.78rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.member-title-small{font-size:0.65rem;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.member-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-left:auto}
+.dot-filled{background:var(--accent)}
+.dot-empty{background:var(--dim)}
+
+/* ── Form Area ── */
+.form-area{padding:28px 32px;overflow-y:auto}
+.form-header{margin-bottom:24px}
+.form-header h2{font-size:1.2rem;font-weight:700;color:var(--text);margin-bottom:4px}
+.form-header p{font-size:0.75rem;color:var(--muted)}
+.form-url{
+  display:inline-block;font-size:0.7rem;color:var(--accent);
+  background:var(--abg);border:1px solid var(--stroke);
+  border-radius:6px;padding:4px 10px;margin-top:8px;font-family:monospace;
+  word-break:break-all;
+}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group.full{grid-column:1/-1}
+.form-group label{font-size:0.62rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent)}
+.form-group input{
+  padding:10px 13px;border-radius:9px;border:1px solid var(--stroke);
+  background:var(--bg2);color:var(--text);font-family:'Open Sans',sans-serif;
+  font-size:0.82rem;outline:none;transition:border-color 0.15s;
+}
+.form-group input:focus{border-color:var(--accent)}
+.form-group input::placeholder{color:var(--dim)}
+
+.section-label{
+  font-size:0.62rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--dim);margin:20px 0 12px;padding-bottom:8px;
+  border-bottom:1px solid var(--stroke);
+}
+
+.office-block{
+  background:var(--card);border:1px solid var(--stroke);border-radius:10px;
+  padding:14px;margin-bottom:10px;
+}
+
+.form-actions{
+  display:flex;align-items:center;gap:12px;margin-top:24px;
+  padding-top:20px;border-top:1px solid var(--stroke);
+}
+.save-msg{font-size:0.72rem;margin-left:auto}
+.save-msg.ok{color:var(--success-text)}
+.save-msg.err{color:var(--error-text)}
+
+/* Loading spinner */
+.spinner{
+  width:16px;height:16px;border:2px solid rgba(83,145,213,0.3);
+  border-top-color:var(--accent);border-radius:50%;
+  animation:spin 0.7s linear infinite;flex-shrink:0;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Empty state ── */
+.empty-state{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:400px;gap:12px;color:var(--dim);text-align:center;
+}
+.empty-state svg{width:40px;height:40px;fill:var(--dim)}
+.empty-state p{font-size:0.82rem}
+
+@media(max-width:700px){
+  .main{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .form-grid{grid-template-columns:1fr}
+  .form-area{padding:20px 16px}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <p class="login-logo">Virginia Institute of Finance &amp; Management</p>
+    <h1 class="login-title">Card Admin</h1>
+    <p class="login-sub">Enter your GitHub Personal Access Token to manage team cards. The token needs <strong style="color:var(--accent)">repo</strong> scope.</p>
+    <div class="form-group">
+      <label>GitHub Personal Access Token</label>
+      <input type="password" id="token-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+    </div>
+    <button class="btn btn-primary" onclick="connect()">
+      <svg viewBox="0 0 24 24"><path d="M12 1C5.93 1 1 5.93 1 12c0 4.87 3.16 9 7.54 10.35.55.1.75-.24.75-.53v-1.85c-3.07.67-3.71-1.48-3.71-1.48-.5-1.27-1.22-1.61-1.22-1.61-1-.68.08-.67.08-.67 1.1.08 1.68 1.13 1.68 1.13.98 1.68 2.57 1.19 3.2.91.1-.71.38-1.19.69-1.46-2.45-.28-5.02-1.22-5.02-5.44 0-1.2.43-2.18 1.13-2.95-.11-.28-.49-1.4.11-2.91 0 0 .92-.3 3.02 1.13a10.5 10.5 0 0 1 5.5 0c2.1-1.43 3.02-1.13 3.02-1.13.6 1.51.22 2.63.11 2.91.7.77 1.13 1.75 1.13 2.95 0 4.23-2.58 5.16-5.04 5.43.4.34.75 1.01.75 2.04v3.02c0 .29.2.63.76.52C19.85 21 23 16.87 23 12c0-6.07-4.93-11-11-11z"/></svg>
+      Connect to GitHub
+    </button>
+    <div id="login-error" style="font-size:0.72rem;color:#f87171;text-align:center;display:none"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="topbar-logo">VIFM</span>
+      <span class="topbar-title">Card Admin</span>
+    </div>
+    <div class="topbar-right">
+      <span class="status-badge status-ok" id="status-badge">Connected</span>
+      <button class="btn btn-ghost" onclick="logout()" style="padding:8px 14px;font-size:0.68rem">
+        <svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5-5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+        Sign out
+      </button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="sidebar">
+      <p class="sidebar-label">Team Members</p>
+      <div id="member-list"></div>
+    </div>
+    <div class="form-area" id="form-area">
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+        <p>Select a team member to edit</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var GITHUB_OWNER = 'aimansadeq';
+var GITHUB_REPO  = 'VIFM-CARDS';
+var GITHUB_FILE  = 'index.html';
+var API_BASE     = 'https://api.github.com/repos/' + GITHUB_OWNER + '/' + GITHUB_REPO + '/contents/' + GITHUB_FILE;
+
+var state = { token: '', team: [], fileSha: '', currentIdx: -1 };
+
+/* ── AUTH ── */
+function connect() {
+  var token = document.getElementById('token-input').value.trim();
+  if (!token) return showLoginError('Please enter your token.');
+  state.token = token;
+  loadTeam();
+}
+
+function logout() {
+  state = { token:'', team:[], fileSha:'', currentIdx:-1 };
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('token-input').value = '';
+}
+
+function showLoginError(msg) {
+  var el = document.getElementById('login-error');
+  el.textContent = msg; el.style.display = 'block';
+}
+
+/* ── LOAD ── */
+function loadTeam() {
+  fetch(API_BASE, { headers: { Authorization: 'token ' + state.token, Accept: 'application/vnd.github.v3+json' }})
+    .then(function(r) {
+      if (!r.ok) throw new Error('GitHub error ' + r.status + ': check your token and repo name.');
+      return r.json();
+    })
+    .then(function(data) {
+      state.fileSha = data.sha;
+      var html = atob(data.content.replace(/\n/g,''));
+      var match = html.match(/<!--TEAM_JSON_START-->\s*<script[^>]*>([\s\S]*?)<\/script>\s*<!--TEAM_JSON_END-->/);
+      if (!match) throw new Error('Team data markers not found in index.html. Make sure you uploaded the latest version.');
+      state.team = JSON.parse(match[1]);
+      showApp();
+    })
+    .catch(function(e) { showLoginError(e.message); });
+}
+
+/* ── RENDER APP ── */
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  renderSidebar();
+}
+
+function initials(name) {
+  return name.replace(/\[.*?\]/g,'').trim().split(/\s+/).filter(Boolean).map(function(w){return w[0];}).join('').slice(0,2).toUpperCase() || '?';
+}
+
+function isPlaceholder(p) { return p.name.startsWith('[') || p.name === '[First Last]'; }
+
+function renderSidebar() {
+  var html = '';
+  state.team.forEach(function(p, i) {
+    var ph = isPlaceholder(p);
+    html += '<div class="member-item' + (i===state.currentIdx?' active':'') + '" onclick="selectMember(' + i + ')">'
+      + '<div class="member-avatar">' + (ph ? '#'+(i+1) : initials(p.name)) + '</div>'
+      + '<div style="flex:1;min-width:0">'
+      + '<p class="member-name">' + (ph ? 'Slot ' + (i+1) : p.name) + '</p>'
+      + '<p class="member-title-small">' + (ph ? 'Empty' : p.title) + '</p>'
+      + '</div>'
+      + '<div class="member-dot ' + (ph?'dot-empty':'dot-filled') + '"></div>'
+      + '</div>';
+  });
+  document.getElementById('member-list').innerHTML = html;
+}
+
+/* ── FORM ── */
+function selectMember(idx) {
+  state.currentIdx = idx;
+  renderSidebar();
+  var p = state.team[idx];
+  var cardURL = 'https://' + GITHUB_OWNER + '.github.io/' + GITHUB_REPO + '/?id=' + p.id;
+
+  var html = '<div class="form-header">'
+    + '<h2>' + (isPlaceholder(p) ? 'New Team Member' : p.name) + '</h2>'
+    + '<p>ID: <strong style="color:var(--accent)">' + p.id + '</strong> &nbsp;&bull;&nbsp; Card URL:</p>'
+    + '<span class="form-url">' + cardURL + '</span>'
+    + '</div>'
+
+    + '<div class="form-grid">'
+    + fg('Full Name', 'name', p.name, 'Aiman S. Sadeq', false)
+    + fg('ID (URL key, no spaces)', 'id', p.id, 'aiman', false)
+    + fg('Credentials', 'credentials', p.credentials, 'CPA · CFE · MA', false)
+    + fg('Title', 'title', p.title, 'Managing Director', false)
+    + fg('Email', 'email', p.email, 'name@viftraining.com', false)
+    + fg('Mobile', 'mobile', p.mobile, '+971 50 000 0000', false)
+    + fg('Office Phone 1', 'officePhone0', (p.officePhone||[])[0]||'', '+971 4 430 8394', false)
+    + fg('Office Phone 2', 'officePhone1', (p.officePhone||[])[1]||'', '+1 703 991 7714', false)
+    + fg('LinkedIn URL', 'linkedin', p.linkedin, 'https://www.linkedin.com/in/...', false)
+    + fg('Website', 'website', p.website, 'https://www.viftraining.com', false)
+    + '</div>';
+
+  html += '<p class="section-label">Office 1</p><div class="office-block"><div class="form-grid">'
+    + fg('City', 'office0city', (p.offices&&p.offices[0])?p.offices[0].city:'', 'Dubai, UAE', false)
+    + fg('Address Line 1', 'office0addr0', (p.offices&&p.offices[0]&&p.offices[0].address)?p.offices[0].address[0]:'', 'The Dome Tower', false)
+    + fg('Address Line 2', 'office0addr1', (p.offices&&p.offices[0]&&p.offices[0].address)?p.offices[0].address[1]||'':'', 'JLT – Cluster N', false)
+    + fg('Address Line 3', 'office0addr2', (p.offices&&p.offices[0]&&p.offices[0].address)?p.offices[0].address[2]||'':'', 'Office No. 1505', false)
+    + '</div></div>';
+
+  html += '<p class="section-label">Office 2 (optional)</p><div class="office-block"><div class="form-grid">'
+    + fg('City', 'office1city', (p.offices&&p.offices[1])?p.offices[1].city:'', 'Ashburn, USA', false)
+    + fg('Address Line 1', 'office1addr0', (p.offices&&p.offices[1]&&p.offices[1].address)?p.offices[1].address[0]:'', '44715 Prentice Drive', false)
+    + fg('Address Line 2', 'office1addr1', (p.offices&&p.offices[1]&&p.offices[1].address)?p.offices[1].address[1]||'':'', 'Ashburn, VA 20146', false)
+    + '</div></div>';
+
+  html += '<div class="form-actions">'
+    + '<button class="btn btn-primary" id="save-btn" onclick="saveMember()">'
+    + '<svg viewBox="0 0 24 24"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>'
+    + 'Save &amp; Publish</button>'
+    + '<span class="save-msg" id="save-msg"></span>'
+    + '</div>';
+
+  document.getElementById('form-area').innerHTML = html;
+}
+
+function fg(label, id, value, placeholder, full) {
+  return '<div class="form-group' + (full?' full':'') + '">'
+    + '<label>' + label + '</label>'
+    + '<input type="text" id="f-' + id + '" value="' + esc(value) + '" placeholder="' + esc(placeholder) + '">'
+    + '</div>';
+}
+
+function esc(s) { return (s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+function val(id) { var el=document.getElementById('f-'+id); return el?el.value.trim():''; }
+
+/* ── SAVE ── */
+function saveMember() {
+  var idx = state.currentIdx;
+  if (idx < 0) return;
+
+  var phones = [];
+  if (val('officePhone0')) phones.push(val('officePhone0'));
+  if (val('officePhone1')) phones.push(val('officePhone1'));
+
+  var offices = [];
+  if (val('office0city')) {
+    var addr0 = [val('office0addr0'), val('office0addr1'), val('office0addr2')].filter(Boolean);
+    offices.push({ city: val('office0city'), address: addr0 });
+  }
+  if (val('office1city')) {
+    var addr1 = [val('office1addr0'), val('office1addr1')].filter(Boolean);
+    offices.push({ city: val('office1city'), address: addr1 });
+  }
+
+  state.team[idx] = {
+    id:          val('id') || state.team[idx].id,
+    name:        val('name'),
+    credentials: val('credentials'),
+    title:       val('title'),
+    email:       val('email'),
+    officePhone: phones,
+    mobile:      val('mobile'),
+    linkedin:    val('linkedin'),
+    website:     val('website'),
+    offices:     offices
+  };
+
+  setSaveState('saving');
+  pushToGitHub();
+}
+
+function setSaveState(state) {
+  var btn = document.getElementById('save-btn');
+  var msg = document.getElementById('save-msg');
+  if (!btn) return;
+  if (state === 'saving') {
+    btn.innerHTML = '<div class="spinner"></div> Saving...';
+    btn.disabled = true;
+    msg.textContent = '';
+  } else if (state === 'ok') {
+    btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:currentColor"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg> Save &amp; Publish';
+    btn.disabled = false;
+    msg.className = 'save-msg ok';
+    msg.textContent = 'Published to GitHub!';
+    setTimeout(function(){ msg.textContent=''; }, 4000);
+  } else {
+    btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:currentColor"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg> Save &amp; Publish';
+    btn.disabled = false;
+    msg.className = 'save-msg err';
+    msg.textContent = state;
+  }
+}
+
+/* ── GITHUB PUSH ── */
+function pushToGitHub() {
+  fetch(API_BASE, { headers: { Authorization: 'token ' + state.token, Accept: 'application/vnd.github.v3+json' }})
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+      state.fileSha = data.sha;
+      var html = atob(data.content.replace(/\n/g,''));
+      var newJson = JSON.stringify(state.team, null, 2);
+      var newHtml = html.replace(
+        /<!--TEAM_JSON_START-->[\s\S]*?<!--TEAM_JSON_END-->/,
+        '<!--TEAM_JSON_START-->\n<script type="application/json" id="vifm-team-data">\n' + newJson + '\n<\/script>\n<!--TEAM_JSON_END-->'
+      );
+      var encoded = btoa(unescape(encodeURIComponent(newHtml)));
+      return fetch(API_BASE, {
+        method: 'PUT',
+        headers: { Authorization: 'token ' + state.token, Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: 'Update team card: ' + state.team[state.currentIdx].name, content: encoded, sha: state.fileSha })
+      });
+    })
+    .then(function(r) {
+      if (!r.ok) return r.json().then(function(e){ throw new Error(e.message); });
+      return r.json();
+    })
+    .then(function(data) {
+      state.fileSha = data.content.sha;
+      setSaveState('ok');
+      renderSidebar();
+    })
+    .catch(function(e) { setSaveState('Error: ' + e.message); });
+}
+
+/* Enter key on token input */
+document.getElementById('token-input').addEventListener('keydown', function(e){ if(e.key==='Enter') connect(); });
+</script>
+</body>
+</html>
